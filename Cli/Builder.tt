@@ -9,6 +9,15 @@
 <#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\Microsoft.CodeAnalysis.CSharp.Workspaces.dll" #>
 <#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\Microsoft.CodeAnalysis.Workspaces.dll" #>
 <#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\Microsoft.CodeAnalysis.Workspaces.Desktop.dll" #>
+<#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\Microsoft.CodeAnalysis.Workspaces.Desktop.dll" #>
+<#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\System.Composition.AttributedModel.dll" #>
+<#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\System.Composition.Convention.dll" #>
+<#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\System.Composition.Hosting.dll" #>
+<#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\System.Composition.Runtime.dll" #>
+<#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\System.Composition.TypedParts.dll" #>
+<#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\System.Collections.Immutable.dll" #>
+<#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\System.Collections.Immutable.dll" #>
+<#@ assembly name="$(SolutionDir)R4T4\\bin\\Debug\\System.ValueTuple.dll" #>
 <#@ assembly name="EnvDTE" #>
 <#@ assembly name="System.Core" #>
 <#@ assembly name="System.IO" #>
@@ -36,7 +45,7 @@
     var types = new List<string>(){"ExampleClass.Models.Person","ExampleClass.Models.Address"};
     var solutionFile = GetSolutionFile();
     var solution = new SolutionService(solutionFile);
-    var project = solution.GetProject("ExampleClass");
+    var project = solution.GetProject("ExampleClasses");
     var typeService = new ClassService(project);
 
     foreach (var type in types)

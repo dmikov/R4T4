@@ -22,25 +22,24 @@ namespace R4T4
         /// <param name="project">The project.</param>
         public ClassService(CompiledProject project)
         {
-            var classes = project.Compilation.SyntaxTrees
-                .Select(s => project.Compilation.GetSemanticModel(s))
-                .SelectMany(s => s.SyntaxTree.GetRoot()
-                    .DescendantNodes()
-                    .OfType<ClassDeclarationSyntax>()
-                    .Select(c => (s.GetDeclaredSymbol(c) as INamedTypeSymbol, GetBaseClasses(s, c))))
-                .ToImmutableList();
-
-            foreach (var c in classes.Where(c=>c.Item1!=null))
+          var models = project.Compilation.SyntaxTrees.Select(s => project.Compilation.GetSemanticModel(s));
+          foreach (var model in models)
+          {
+            var classes = model.SyntaxTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>();
+            foreach (var @class in classes)
             {
-                _classes[c.Item1.GetFullTypeString()] = c.Item1;
-                foreach (var namedTypeSymbol in c.Item2)
-                {
-                    var baseType = namedTypeSymbol.GetFullTypeString();
-                    if(!_bases.ContainsKey(baseType))
-                        _bases[baseType] = new List<INamedTypeSymbol>();
-                    _bases[baseType].Add(c.Item1);
-                }
+              if (!(model.GetDeclaredSymbol(@class) is INamedTypeSymbol symbol)) continue;
+              var fullTypeString = GetFullTypeString(symbol);
+              _classes[fullTypeString] = symbol;
+              foreach (var typeSymbol in GetBaseClasses(model, @class))
+              {
+                var baseType = typeSymbol.GetFullTypeString();
+                if (!_bases.ContainsKey(baseType))
+                  _bases[baseType] = new List<INamedTypeSymbol>();
+                _bases[baseType].Add(symbol);
+              }
             }
+          }
         }
 
         /// <summary>
@@ -75,7 +74,7 @@ namespace R4T4
             return _classes.TryGetValue(name, out INamedTypeSymbol cls) ? cls : null;
         }
 
-        private static IEnumerable<INamedTypeSymbol> GetBaseClasses(SemanticModel model, BaseTypeDeclarationSyntax type)
+        private IEnumerable<INamedTypeSymbol> GetBaseClasses(SemanticModel model, BaseTypeDeclarationSyntax type)
         {
             var classSymbol = model.GetDeclaredSymbol(type) as INamedTypeSymbol;
             var returnValue = new List<INamedTypeSymbol>();
@@ -88,5 +87,35 @@ namespace R4T4
             }
             return returnValue;
         }
-    }
+      /// <summary>
+      /// Gets the fully qualified type string.
+      /// </summary>
+      /// <param name="symbol">The symbol.</param>
+      /// <param name="incNs">if set to <c>true</c> Include full namespace for type.</param>
+      /// <returns></returns>
+      private string GetFullTypeString(ISymbol symbol, bool incNs = true)
+      {
+        var name = symbol.Name;
+        if (!(symbol is INamedTypeSymbol)) return name;
+        var arguments = ((INamedTypeSymbol)symbol).TypeArguments;
+        if (arguments.Length <= 0) return incNs ? $"{GetFullNamespace(symbol)}.{name}" : name;
+
+        var types = string.Join(", ", arguments.Select(ta => GetFullTypeString(ta, incNs)));
+        return $"{name}<{types}>";
+      }
+      /// <summary>
+      /// Gets the fully qualified namespace of type.
+      /// </summary>
+      /// <param name="symbol">The symbol.</param>
+      /// <returns></returns>
+      private string GetFullNamespace( ISymbol symbol)
+      {
+        var ns = symbol.ContainingNamespace;
+        if (string.IsNullOrEmpty(ns?.Name))
+          return null;
+
+        var full = ns.GetFullNamespace();
+        return full == null ? ns.Name : $"{full}.{ns.Name}";
+      }
+  }
 }
